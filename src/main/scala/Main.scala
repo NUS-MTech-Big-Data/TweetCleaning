@@ -9,7 +9,7 @@ object Main extends App {
     .format("kafka")
     .option("kafka.bootstrap.servers", "192.168.1.77:9092")
     .option("subscribe", "twitter.raw")
-    .option("startingOffsets", "earliest")
+    .option("startingOffsets", "earliest") // Always read from offset 0, for dev/testing purpose
     .load()
   df_raw.printSchema()
 
@@ -35,6 +35,7 @@ object Tweet {
     val userSchema = new StructType()
       .add("Id", LongType)
       .add("Name", StringType)
+      .add("ScreenName", StringType) // Twitter User Handle
     val hashTagSchema = new StructType()
       .add("Text", StringType)
 
