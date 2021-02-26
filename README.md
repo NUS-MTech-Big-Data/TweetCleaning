@@ -8,22 +8,27 @@ A scala project that
 1. Install sbt
 We will use sdkman to install sbt
 ```
-# uninstal sbt if already installed via brew
+# Uninstal sbt if already installed via brew
 brew uninstall sbt
 
+# Install sdkman
 curl -s "https://get.sdkman.io" | bash
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 
 sdk install sbt
 ```
 
-2. Install Java 11
+2. Install Java 8 
 ```
 sdk list java
-sdk install java 11.0.10.hs-adpt
+sdk install java 8.0.282.hs-adpt
 ```
 
-3. Use Scala version 2.11.11
+3. Install Spark 2.4.7
+```
+sdk list spark
+sdk install spark 2.4.7
+```
 
 ## Usage
 ```
