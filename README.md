@@ -5,7 +5,7 @@ A scala project that
 3. Push the message back to Kafka (twitter.clean)
 
 ## Prerequisite
-1. Install sbt
+1. Install sbt  
 We will use sdkman to install sbt
 ```
 # Uninstal sbt if already installed via brew
