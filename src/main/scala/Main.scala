@@ -18,10 +18,11 @@ object Main extends App {
   val df_json = df.select(from_json(col("value"), Tweet.schema()).alias("parsed"))
   df_json.printSchema()
 
-  val df_text = df_json.withColumn("text", col("parsed.payload.Text"))
+  val df_text = df_json.withColumn("text",
+    regexp_replace(regexp_replace(col("parsed.payload.Text"),
+      "^RT ", ""),
+      "@\\w+", ""))
   val df_english = DataPreprocessing.filterNonEnglish(df_text, inputColumn = "text")
-  // TODO Remove retweet and user taggings, RT and @/w*
-  // "RT @user: @anotherUser ..."
   val df_tokenized = DataPreprocessing.tokenize(df_english, inputColumn = "text", outputColumn = "words")
   val df_filtered = DataPreprocessing.removeStopWords(df_tokenized, inputColumn = "words", outputColumn = "filtered")
 
@@ -31,7 +32,7 @@ object Main extends App {
     col("parsed.payload.Id").cast("string").alias("key"), // key must be string or bytes
     to_json(struct(
       col("parsed.payload.*"),
-      col("filtered") as "FilteredText"
+      concat_ws(" ", col("filtered")) as "FilteredText"
     )).alias("value")
   )
   val writeStream = df_clean
