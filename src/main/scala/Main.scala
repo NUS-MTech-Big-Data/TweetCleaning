@@ -3,6 +3,7 @@ import org.apache.spark.sql.SparkSession
 
 object Main extends App {
   val kafkaHost = "192.168.1.77:9092"
+  val sparkWriteCheckPoint = "/Users/ry735172/Projects/nus/TweetCleaning/write_checkpoint"
   val spark = SparkSession.builder.appName("TweetCleaning").master("local[*]").getOrCreate()
   // Read tweets from Kafka twitter.raw topic
   val readStream = spark
@@ -40,7 +41,7 @@ object Main extends App {
     .format("kafka")
     .option("kafka.bootstrap.servers", kafkaHost)
     .option("topic", "twitter.clean")
-    .option("checkpointLocation", "/Users/ry735172/Projects/nus/TweetCleaning/write_checkpoint")
+    .option("checkpointLocation", sparkWriteCheckPoint)
     .start()
   writeStream.awaitTermination()
 }
