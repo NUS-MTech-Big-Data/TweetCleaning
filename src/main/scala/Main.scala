@@ -12,6 +12,7 @@ object Main extends App {
     .option("kafka.bootstrap.servers", kafkaHost)
     .option("subscribe", "twitter.raw")
     .option("startingOffsets", "earliest") // Always read from offset 0, for dev/testing purpose
+    .option("failOnDataLoss", false)
     .load()
   readStream.printSchema()
 
@@ -19,24 +20,19 @@ object Main extends App {
   val df_json = df.select(from_json(col("value"), Tweet.schema()).alias("parsed"))
   df_json.printSchema()
 
-  val df_text = df_json.withColumn("text",
-    regexp_replace(regexp_replace(col("parsed.payload.Text"),
-      "^RT ", ""),
-      "@\\w+", ""))
-  val df_english = DataPreprocessing.filterNonEnglish(df_text, inputColumn = "text")
-  val df_tokenized = DataPreprocessing.tokenize(df_english, inputColumn = "text", outputColumn = "words")
-  val df_filtered = DataPreprocessing.removeStopWords(df_tokenized, inputColumn = "words", outputColumn = "filtered")
-
+  val df_text = df_json.withColumn("text", col("parsed.payload.Text"))
+  val df_clean = DataPreprocessing.cleanTweet(df_text, "text")
+  val df_english = DataPreprocessing.filterNonEnglish(df_clean, inputColumn = "text")
 
   // Write cleaned tweets to Kafka twitter.clean topic
-  val df_clean = df_filtered.select(
+  val df_result = df_english.select(
     col("parsed.payload.Id").cast("string").alias("key"), // key must be string or bytes
     to_json(struct(
       col("parsed.payload.*"),
-      concat_ws(" ", col("filtered")) as "FilteredText"
+      col("text") as "FilteredText"
     )).alias("value")
   )
-  val writeStream = df_clean
+  val writeStream = df_result
     .writeStream
     .format("kafka")
     .option("kafka.bootstrap.servers", kafkaHost)

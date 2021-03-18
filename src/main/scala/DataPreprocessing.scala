@@ -2,7 +2,7 @@ import com.johnsnowlabs.nlp.pretrained.PretrainedPipeline
 import org.apache.spark.ml.feature.RegexTokenizer
 import org.apache.spark.ml.feature.StopWordsRemover
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.{col, explode}
+import org.apache.spark.sql.functions.{col, explode, regexp_replace}
 
 object DataPreprocessing {
   /**
@@ -40,5 +40,20 @@ object DataPreprocessing {
     val df_language = df_annotate_result.withColumn("language", explode(col("language.result")))
     val df_english = df_language.filter(col("language") === "en")
     df_english
+  }
+
+
+  /**
+   * Format extracted tweets by removing retweets, usernames, urls, unnecessary characters
+   */
+  def cleanTweet (extractedTweets : DataFrame, inputColumn : String) : DataFrame = {
+    val singleLineDataframe =  extractedTweets.withColumn(inputColumn, regexp_replace(col(inputColumn), "[\\r\\n\\n]", "."))
+    val nonUrlTweetDataframe  = singleLineDataframe.withColumn(inputColumn, regexp_replace(col(inputColumn), "http\\S+", ""))
+    val nonHashTagsTweetDataframe = nonUrlTweetDataframe.withColumn(inputColumn, regexp_replace(col(inputColumn), "#", ""))
+    val nonUserNameTweets = nonHashTagsTweetDataframe.withColumn(inputColumn, regexp_replace(col(inputColumn), "@\\w+", ""))
+    val noRTDataFrame = nonUserNameTweets.withColumn(inputColumn, regexp_replace(col(inputColumn), "RT", ""))
+    val noUrlTweetDataframe  = noRTDataFrame.withColumn(inputColumn, regexp_replace(col(inputColumn), "www\\S+", ""))
+    val removeUnnecessaryCharacter  = noUrlTweetDataframe.withColumn(inputColumn, regexp_replace(col(inputColumn), ":", ""))
+    removeUnnecessaryCharacter
   }
 }
