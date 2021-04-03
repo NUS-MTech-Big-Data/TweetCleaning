@@ -1,6 +1,7 @@
+package tweet.cleaning
+
 import com.johnsnowlabs.nlp.pretrained.PretrainedPipeline
-import org.apache.spark.ml.feature.RegexTokenizer
-import org.apache.spark.ml.feature.StopWordsRemover
+import org.apache.spark.ml.feature.{RegexTokenizer, StopWordsRemover}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.{col, explode, regexp_replace}
 
@@ -22,7 +23,7 @@ object DataPreprocessing {
    * @param df_tokenized Tokenized dataframe
    * @return Dataframe after removing all the stop words such as i , am , a the
    */
-  def removeStopWords (df_tokenized : DataFrame, inputColumn: String, outputColumn: String): DataFrame = {
+  def removeStopWords(df_tokenized: DataFrame, inputColumn: String, outputColumn: String): DataFrame = {
     val stopWordRemover = new StopWordsRemover()
       .setInputCol(inputColumn)
       .setOutputCol(outputColumn)
@@ -30,8 +31,10 @@ object DataPreprocessing {
   }
 
   val detectLanguagePipeline = new PretrainedPipeline("detect_language_43", lang = "xx")
+
   /**
    * Filter out non English texts
+   *
    * @param df DataFrame contain texts
    * @return A DataFrame with only English texts
    */
@@ -46,14 +49,14 @@ object DataPreprocessing {
   /**
    * Format extracted tweets by removing retweets, usernames, urls, unnecessary characters
    */
-  def cleanTweet (extractedTweets : DataFrame, inputColumn : String) : DataFrame = {
-    val singleLineDataframe =  extractedTweets.withColumn(inputColumn, regexp_replace(col(inputColumn), "[\\r\\n\\n]", "."))
-    val nonUrlTweetDataframe  = singleLineDataframe.withColumn(inputColumn, regexp_replace(col(inputColumn), "http\\S+", ""))
+  def cleanTweet(extractedTweets: DataFrame, inputColumn: String): DataFrame = {
+    val singleLineDataframe = extractedTweets.withColumn(inputColumn, regexp_replace(col(inputColumn), "[\\r\\n\\n]", "."))
+    val nonUrlTweetDataframe = singleLineDataframe.withColumn(inputColumn, regexp_replace(col(inputColumn), "http\\S+", ""))
     val nonHashTagsTweetDataframe = nonUrlTweetDataframe.withColumn(inputColumn, regexp_replace(col(inputColumn), "#", ""))
     val nonUserNameTweets = nonHashTagsTweetDataframe.withColumn(inputColumn, regexp_replace(col(inputColumn), "@\\w+", ""))
     val noRTDataFrame = nonUserNameTweets.withColumn(inputColumn, regexp_replace(col(inputColumn), "RT", ""))
-    val noUrlTweetDataframe  = noRTDataFrame.withColumn(inputColumn, regexp_replace(col(inputColumn), "www\\S+", ""))
-    val removeUnnecessaryCharacter  = noUrlTweetDataframe.withColumn(inputColumn, regexp_replace(col(inputColumn), ":", ""))
+    val noUrlTweetDataframe = noRTDataFrame.withColumn(inputColumn, regexp_replace(col(inputColumn), "www\\S+", ""))
+    val removeUnnecessaryCharacter = noUrlTweetDataframe.withColumn(inputColumn, regexp_replace(col(inputColumn), ":", ""))
     removeUnnecessaryCharacter
   }
 }

@@ -1,3 +1,5 @@
+package tweet.cleaning
+
 import org.apache.spark.sql.types.{ArrayType, LongType, StringType, StructType}
 
 object Tweet {
